@@ -1,16 +1,34 @@
 ;;; testrun.el --- helpers for running tests  -*- lexical-binding:t -*-
-
+;;;
+;;; Version: 1
+;;;
 ;;; Commentary:
 
-;; Cater to the most common scenarios:
-;; - run a test at point
-;; - rerun the most recently run testing command
-;; - TODO select and rerun a recently run testing command
-;; - TODO jump to recently used tests
-;; - TODO run tests in current directory
-;; - TODO run tests in current project
+;;; Cater to the most common scenarios:
+;;; - run a test at point
+;;; - rerun the most recently run testing command
+;;; - TODO select and rerun a recently run testing command
+;;; - TODO jump to recently used tests
+;;; - TODO run tests in current directory
+;;; - TODO run tests in current project
 
 ;;; Code:
+
+(require 'treesit)
+
+
+;;;; Customization
+
+
+(defcustom testrun-backends
+  '((:mode go-ts-mode :backend testrun--go-backend)
+    (:mode go-mode :backend testrun--go-backend))
+  "A list of backends to use for running tests."
+  :type '(sexp)
+  :group 'languages)
+
+
+;;;; Methods
 
 
 (defun testrun-at-point ()
@@ -21,13 +39,7 @@
     (compile c)))
 
 
-(defun testrun-retest ()
-  "Retest the most recently run testing command."
-  (interactive)
-  (recompile))
-
-
-;; Golang
+;;;; Golang
 
 
 (defun testrun--go-backend ()
@@ -133,7 +145,7 @@
       (error "Not inside a Go test"))))
 
 
-;; Implementation
+;;;; Implementation
 
 
 (defun testrun--pick-backend ()
@@ -150,14 +162,6 @@
 (defun testrun--backend-test-command-at-point (backend)
   "Determine a test command from point for the given BACKEND."
   (funcall (plist-get (funcall backend) :test-command-at-point)))
-
-
-;; Customization
-
-(defcustom testrun-backends
-  '((:mode go-ts-mode :backend testrun--go-backend)
-    (:mode go-mode :backend testrun--go-backend))
-  "A list of backends to use for running tests.")
 
 
 (provide 'testrun)
