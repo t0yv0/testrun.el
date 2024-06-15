@@ -31,6 +31,7 @@
 ;;;; Methods
 
 
+;;;###autoload
 (defun testrun-at-point ()
   "Run a test at point."
   (interactive)
