@@ -136,6 +136,9 @@
 
 (defun testrun--go-test-command-at-point ()
   "Return the test command at point for Go."
+  ;; Unless there is a `treesit-parser' already, create one.
+  (unless (treesit-parser-list)
+    (treesit-parser-create 'go))
   (let ((c (testrun--go-recognize-test-chain)))
     (if c
         (format "go test -test.run %s"
@@ -152,7 +155,7 @@
   "Pick a backend for the current major mode."
   (let ((selected-backend nil))
     (dolist (backend testrun-backends)
-      (when (equal major-mode (plist-get backend :mode))
+      (when (derived-mode-p (plist-get backend :mode))
         (setq selected-backend (plist-get backend :backend))))
     (if selected-backend
         selected-backend
