@@ -30,20 +30,20 @@
 
 
 ;;;###autoload
-(defun testrun-at-point ()
+(defun testrun-at-point (arg)
   "Run a test at point."
-  (interactive)
+  (interactive "p")
   (let* ((b (testrun--pick-backend))
-         (c (testrun--apply b :test-command-at-point)))
+         (c (testrun--apply b :test-command-at-point arg)))
     (compile c)))
 
 
 ;;;###autoload
-(defun testrun-in-current-directory ()
+(defun testrun-in-current-directory (arg)
   "Run tests in the current directory."
-  (interactive)
+  (interactive "p")
   (let* ((b (testrun--pick-backend))
-         (c (testrun--apply b :test-command-current-directory)))
+         (c (testrun--apply b :test-command-current-directory arg)))
     (compile c)))
 
 
@@ -169,24 +169,28 @@
     (_ nil)))
 
 
-(defun testrun--go-test-command-at-point ()
+(defun testrun--go-test-command-at-point (arg)
   "Return the test command at point for Go."
   ;; Unless there is a `treesit-parser' already, create one.
   (unless (treesit-parser-list)
     (treesit-parser-create 'go))
   (let ((c (testrun--go-recognize-test-chain)))
     (if c
-        (format "go test%s -test.run %s"
+        (format "go test%s%s -test.run %s"
                 (if testrun--go-verbose " -test.v" "")
+                (if (equal arg 4) " -update" "")
                 (shell-quote-argument
                  (string-join (mapcar (lambda (x) (format "^%s$" x)) c) "/")))
         nil
       (error "Not inside a Go test"))))
 
 
-(defun testrun--go-test-command-current-directory ()
+(defun testrun--go-test-command-current-directory (arg)
   "Return the test command for testing current directory in Go."
-  (concat "go test" (if testrun--go-verbose " -test.v" "") " ."))
+  (concat "go test"
+          (if testrun--go-verbose " -test.v" "")
+          (if (equal arg 4) " -update" "")
+          " ."))
 
 
 ;;;; Implementation
