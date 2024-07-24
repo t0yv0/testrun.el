@@ -11,6 +11,7 @@
 
 ;;; Code:
 
+(require 'compile)
 (require 'treesit)
 
 
@@ -53,13 +54,32 @@
   (recompile))
 
 
+;;;###autoload
+(defun testrun-toggle-verbosity ()
+  "Toggle verbosity level for testing."
+  (interactive)
+  (let* ((b (testrun--pick-backend)))
+    (testrun--backend-toggle-verbosity b)))
+
+
 ;;;; Golang
 
 
 (defun testrun--go-backend ()
   "Supports testrun for Golang."
   (list :test-command-at-point #'testrun--go-test-command-at-point
-        :test-command-current-directory #'testrun--go-test-command-current-directory))
+        :test-command-current-directory #'testrun--go-test-command-current-directory
+        :toggle-verbosity #'testrun--go-toggle-verbosity))
+
+
+(defvar testrun--go-verbose nil)
+
+
+(defun testrun--go-toggle-verbosity ()
+  "Switch between verbose and normal testing."
+  (interactive)
+  (setq testrun--go-verbose (not testrun--go-verbose))
+  (message (if testrun--go-verbose "-test.v enabled" "-test.v disabled")))
 
 
 (defun testrun--go-recognize-test-chain ()
@@ -156,7 +176,8 @@
     (treesit-parser-create 'go))
   (let ((c (testrun--go-recognize-test-chain)))
     (if c
-        (format "go test -test.run %s"
+        (format "go test%s -test.run %s"
+                (if testrun--go-verbose " -test.v" "")
                 (shell-quote-argument
                  (string-join (mapcar (lambda (x) (format "^%s$" x)) c) "/")))
         nil
@@ -165,7 +186,7 @@
 
 (defun testrun--go-test-command-current-directory ()
   "Return the test command for testing current directory in Go."
-  "go test .")
+  (concat "go test" (if testrun--go-verbose " -test.v" "") " ."))
 
 
 ;;;; Implementation
@@ -188,8 +209,13 @@
 
 
 (defun testrun--backend-test-command-current-directory (backend)
-  "Determine a current-directory based test command  for the given BACKEND."
+  "Determine a current-directory based test command for the given BACKEND."
   (funcall (plist-get (funcall backend) :test-command-current-directory)))
+
+
+(defun testrun--backend-toggle-verbosity (backend)
+  "Toggle verbosity levels for the given BACKEND."
+  (funcall (plist-get (funcall backend) :toggle-verbosity)))
 
 
 (provide 'testrun)
