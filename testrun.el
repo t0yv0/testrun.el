@@ -9,7 +9,6 @@
 ;;; - rerun the most recently run testing command
 ;;; - TODO select and rerun a recently run testing command
 ;;; - TODO jump to recently used tests
-;;; - TODO run tests in current directory
 ;;; - TODO run tests in current project
 
 ;;; Code:
@@ -40,12 +39,22 @@
     (compile c)))
 
 
+;;;###autoload
+(defun testrun-in-current-directory ()
+  "Run tests in the current directory."
+  (interactive)
+  (let* ((b (testrun--pick-backend))
+         (c (testrun--backend-test-command-current-directory b)))
+    (compile c)))
+
+
 ;;;; Golang
 
 
 (defun testrun--go-backend ()
   "Supports testrun for Golang."
-  (list :test-command-at-point #'testrun--go-test-command-at-point))
+  (list :test-command-at-point #'testrun--go-test-command-at-point
+        :test-command-current-directory #'testrun--go-test-command-current-directory))
 
 
 (defun testrun--go-recognize-test-chain ()
@@ -149,6 +158,11 @@
       (error "Not inside a Go test"))))
 
 
+(defun testrun--go-test-command-current-directory ()
+  "Return the test command for testing current directory in Go."
+  "go test .")
+
+
 ;;;; Implementation
 
 
@@ -166,6 +180,11 @@
 (defun testrun--backend-test-command-at-point (backend)
   "Determine a test command from point for the given BACKEND."
   (funcall (plist-get (funcall backend) :test-command-at-point)))
+
+
+(defun testrun--backend-test-command-current-directory (backend)
+  "Determine a current-directory based test command  for the given BACKEND."
+  (funcall (plist-get (funcall backend) :test-command-current-directory)))
 
 
 (provide 'testrun)
