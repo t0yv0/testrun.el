@@ -34,7 +34,7 @@
   "Run a test at point."
   (interactive)
   (let* ((b (testrun--pick-backend))
-         (c (testrun--backend-test-command-at-point b)))
+         (c (testrun--apply b :test-command-at-point)))
     (compile c)))
 
 
@@ -43,7 +43,7 @@
   "Run tests in the current directory."
   (interactive)
   (let* ((b (testrun--pick-backend))
-         (c (testrun--backend-test-command-current-directory b)))
+         (c (testrun--apply b :test-command-current-directory)))
     (compile c)))
 
 
@@ -59,7 +59,7 @@
   "Toggle verbosity level for testing."
   (interactive)
   (let* ((b (testrun--pick-backend)))
-    (testrun--backend-toggle-verbosity b)))
+    (testrun--apply b :toggle-verbosity)))
 
 
 ;;;; Golang
@@ -203,19 +203,9 @@
       (error "No backend found for %s" major-mode))))
 
 
-(defun testrun--backend-test-command-at-point (backend)
-  "Determine a test command from point for the given BACKEND."
-  (funcall (plist-get (funcall backend) :test-command-at-point)))
-
-
-(defun testrun--backend-test-command-current-directory (backend)
-  "Determine a current-directory based test command for the given BACKEND."
-  (funcall (plist-get (funcall backend) :test-command-current-directory)))
-
-
-(defun testrun--backend-toggle-verbosity (backend)
-  "Toggle verbosity levels for the given BACKEND."
-  (funcall (plist-get (funcall backend) :toggle-verbosity)))
+(defun testrun--apply (backend method-selector &rest args)
+  "Dispatches a METHOD-SELECTOR call with ARGS to the given BACKEND."
+  (apply (plist-get (funcall backend) method-selector) args))
 
 
 (provide 'testrun)
