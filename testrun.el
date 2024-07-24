@@ -6,8 +6,6 @@
 
 ;;; Cater to the most common scenarios:
 ;;; - run a test at point
-;;; - rerun the most recently run testing command
-;;; - TODO select and rerun a recently run testing command
 ;;; - TODO jump to recently used tests
 ;;; - TODO run tests in current project
 
@@ -46,6 +44,13 @@
   (let* ((b (testrun--pick-backend))
          (c (testrun--backend-test-command-current-directory b)))
     (compile c)))
+
+
+;;;###autoload
+(defun testrun-repeat ()
+  "Repeat the most recently executed test command."
+  (interactive)
+  (recompile))
 
 
 ;;;; Golang
