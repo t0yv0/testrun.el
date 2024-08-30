@@ -28,7 +28,7 @@
 
 (defcustom testrun-switch-to-compilation-buffer nil
   "A flag that enables switching to the compilation buffer after each test command."
-  :type boolean
+  :type 'boolean
   :group 'languages)
 
 
@@ -218,8 +218,8 @@
   (apply (plist-get (funcall backend) method-selector) args))
 
 
-(defun testrun--compile ()
-  (compile)
+(defun testrun--compile (c)
+  (compile c)
   (when testrun-switch-to-compilation-buffer
     (compilation-goto-in-progress-buffer)))
 
