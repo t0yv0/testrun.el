@@ -26,6 +26,12 @@
   :group 'languages)
 
 
+(defcustom testrun-switch-to-compilation-buffer nil
+  "A flag that enables switching to the compilation buffer after each test command."
+  :type boolean
+  :group 'languages)
+
+
 ;;;; Methods
 
 
@@ -35,7 +41,7 @@
   (interactive "p")
   (let* ((b (testrun--pick-backend))
          (c (testrun--apply b :test-command-at-point arg)))
-    (compile c)))
+    (testrun--compile c)))
 
 
 ;;;###autoload
@@ -44,14 +50,14 @@
   (interactive "p")
   (let* ((b (testrun--pick-backend))
          (c (testrun--apply b :test-command-current-directory arg)))
-    (compile c)))
+    (testrun--compile c)))
 
 
 ;;;###autoload
 (defun testrun-repeat ()
   "Repeat the most recently executed test command."
   (interactive)
-  (recompile))
+  (testrun--recompile))
 
 
 ;;;###autoload
@@ -210,6 +216,18 @@
 (defun testrun--apply (backend method-selector &rest args)
   "Dispatches a METHOD-SELECTOR call with ARGS to the given BACKEND."
   (apply (plist-get (funcall backend) method-selector) args))
+
+
+(defun testrun--compile ()
+  (compile)
+  (when testrun-switch-to-compilation-buffer
+    (compilation-goto-in-progress-buffer)))
+
+
+(defun testrun--recompile ()
+  (recompile)
+  (when testrun-switch-to-compilation-buffer
+    (compilation-goto-in-progress-buffer)))
 
 
 (provide 'testrun)
