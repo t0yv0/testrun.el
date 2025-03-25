@@ -43,6 +43,13 @@
          (c (testrun--apply b :test-command-at-point arg)))
     (testrun--compile c)))
 
+;;;###autoload
+(defun testrun-in-current-file (arg)
+  "Run all tests in the current file."
+  (interactive "p")
+  (let* ((b (testrun--pick-backend))
+         (c (testrun--apply b :test-command-current-file arg)))
+    (testrun--compile c)))
 
 ;;;###autoload
 (defun testrun-in-current-directory (arg)
@@ -75,6 +82,7 @@
   "Supports testrun for Golang."
   (list :test-command-at-point #'testrun--go-test-command-at-point
         :test-command-current-directory #'testrun--go-test-command-current-directory
+        :test-command-current-file #'testrun--go-test-command-current-file
         :toggle-verbosity #'testrun--go-toggle-verbosity))
 
 
@@ -198,6 +206,43 @@
           (if (equal arg 4) " -update" "")
           " ."))
 
+(defvar testrun--go-tests-fns-in-node
+  (treesit-query-compile
+   'go
+   '(((function_declaration
+       name: (identifier) @function-name (:match "^Test" @function-name)
+       parameters: (parameter_list
+                    (parameter_declaration
+                     name: (identifier)
+                     type: (pointer_type
+                            (qualified_type
+                             package: (package_identifier) @pkg (:equal "testing" @pkg)
+                             name: (type_identifier) @type-name  (:equal "T" @type-name)))))
+       @parameter-list (:pred testrun--3-children-predicate @parameter-list)))))
+  "A `treesit' query that will match all function nodes that will be run as tests.")
+
+(defun testrun--3-children-predicate (node)
+  "A predicate for tree-sitter: (= (children NODE) 3).
+
+`treesit' doesn't allow this function to be inlined or moved out of the global scope."
+  (= 3 (treesit-node-child-count node)))
+
+(defun testrun--go-test-command-current-file (arg)
+  "Return a command that runs all tests in the current directory in Go."
+  ;; Ensure there is a `treesit-parser` for Go; create one if needed.
+  (unless (treesit-parser-list)
+    (treesit-parser-create 'go))
+  (if-let ((matches (treesit-query-capture (car (treesit-parser-list nil 'go)) testrun--go-tests-fns-in-node)))
+      (concat "go test "
+              (when testrun--go-verbose "-test.v ")
+              (when (equal arg 4) "-update ")
+              (format "-test.run \"^(%s)$\" "
+                      (mapconcat
+                       (lambda (match) (treesit-node-text (cdr match)))
+                       (seq-filter (lambda (match) (eq (car match) 'function-name)) matches)
+                       "|"))
+              "./...")
+    (user-error "No test functions found")))
 
 ;;;; Implementation
 
