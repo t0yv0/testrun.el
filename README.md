@@ -8,9 +8,9 @@ Runs [Go](https://go.dev) tests at point.
 (use-package testrun
   :bind (("C-c t SPC" . testrun-at-point)
          ("C-c t t"   . testrun-repeat)
-         ("C-c t d".  . testrun-in-current-directory)
-         ("C-c t f".  . testrun-in-current-file)
-         ("C-c t v".  . testrun-toggle-verbosity))
+         ("C-c t d"   . testrun-in-current-directory)
+         ("C-c t f"   . testrun-in-current-file)
+         ("C-c t v"   . testrun-toggle-verbosity))
 ```
 
 ## Usage
